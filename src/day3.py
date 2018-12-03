@@ -33,7 +33,6 @@ class Claim:
 class Area:
     def __init__(self):
         self._taken_place: Dict[int, Dict[int, List[int]]]  = {}
-        self._overlapped_ids = set()
 
     @classmethod
     def range(self, from_index: int, size: int) -> Iterable[int]:
@@ -48,12 +47,6 @@ class Area:
                 if column not in self._taken_place[row]:
                     self._taken_place[row][column] = []
 
-                cell_count = len(self._taken_place[row][column])
-                if cell_count == 1:
-                    self._overlapped_ids.add(self._taken_place[row][column][0])
-                if cell_count > 0:
-                    self._overlapped_ids.add(claim.id)
-
                 self._taken_place[row][column].append(claim.id)
 
     def get_overlapped_cells_count(self):
@@ -64,8 +57,12 @@ class Area:
                     overlapped += 1
         return overlapped
 
-    def get_overlapped_ids(self):
-        return self._overlapped_ids
+    def is_overlapped(self, claim: Claim):
+        for row in Area.range(claim.top_offset, claim.height):
+            for column in Area.range(claim.left_offset, claim.width):
+                if len(self._taken_place[row][column]) != 1:
+                    return True
+        return False
 
 def create_data():
     input = read_lines(__file__)
@@ -85,10 +82,7 @@ def part1():
 def part2():
     claims, area = create_data()
 
-    all_ids = set([c.id for c in claims])
-    overlapped = area.get_overlapped_ids()
-
-    non_overlapped = all_ids.difference(overlapped)
+    non_overlapped = [c.id for c in claims if not area.is_overlapped(c)]
 
     print('Part 2:', non_overlapped)
 
